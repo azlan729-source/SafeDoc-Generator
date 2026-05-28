@@ -76,7 +76,7 @@ SafeDoc Generator/
 
 ## Screenshots
 
-### Login Page
+### Login
 ![Login](./screenshot/login.png)
 
 ### Dashboard
