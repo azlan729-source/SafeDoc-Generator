@@ -54,6 +54,37 @@ SafeDoc Generator is a SaaS-style safety document management system built for co
    npm run dev
    ```
 
+## Troubleshooting
+
+- **Port in use (EADDRINUSE):** If starting the backend shows an error like `listen EADDRINUSE: address already in use`, another process is already using the configured port (default `3000`).
+
+   - Change the port in `backend/.env` (create the file if missing):
+
+      ```env
+      PORT=4001
+      ```
+
+   - Or start the backend with an overridden port (temporary):
+
+      PowerShell:
+      ```powershell
+      $env:PORT=4001; npm run dev
+      ```
+
+      CMD:
+      ```cmd
+      set PORT=4001&& npm run dev
+      ```
+
+   - To free the port on Windows you can find and kill the process:
+
+      ```powershell
+      netstat -ano | findstr :3000
+      taskkill /PID <PID> /F
+      ```
+
+   These steps are simple and beginner-friendly — changing `PORT` is the quickest fix.
+
 ## Project Structure
 
 ```

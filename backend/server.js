@@ -30,8 +30,17 @@ const PORT = process.env.PORT || 3000;
   try {
     await sequelize.authenticate();
     await db.sequelize.sync();
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`SafeDoc Generator backend listening on port ${PORT}`);
+    });
+
+    server.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Set a different PORT or stop the process using that port.`);
+      } else {
+        console.error('Server error:', err && err.message ? err.message : err);
+      }
+      process.exit(1);
     });
   } catch (err) {
     console.error('Unable to start backend:', err.message || err);
