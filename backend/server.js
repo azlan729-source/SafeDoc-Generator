@@ -29,7 +29,7 @@ const PORT = process.env.PORT || 3000;
 (async function start() {
   try {
     await sequelize.authenticate();
-    await db.sequelize.sync();
+    await db.sequelize.sync({ alter: true });
     const server = app.listen(PORT, () => {
       console.log(`SafeDoc Generator backend listening on port ${PORT}`);
     });

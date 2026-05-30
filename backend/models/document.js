@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         notEmpty: true,
       },
     },
+    status: {
+      type: DataTypes.ENUM('draft', 'completed'),
+      allowNull: false,
+      defaultValue: 'draft',
+    },
     content: {
       type: DataTypes.JSON,
       allowNull: false,

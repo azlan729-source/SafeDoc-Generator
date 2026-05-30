@@ -4,17 +4,22 @@ const documentTemplateService = require('../services/documentTemplateService');
 const pdfService = require('../services/pdfService');
 const Document = db.Document;
 
+const canAccessDocument = (document, user) => {
+  if (!document) return false;
+  return document.userId === user.id || user.role === 'admin';
+};
+
 exports.createDocument = async (req, res, next) => {
   try {
     const { title, documentType, content } = req.body;
-    const document = await Document.create({
+    await Document.create({
       title,
       documentType,
       content,
       userId: req.user.id,
     });
 
-    res.status(201).json(document);
+    res.status(201).json({ success: true, message: 'Document saved successfully' });
   } catch (err) {
     next(err);
   }
@@ -24,6 +29,7 @@ exports.listDocuments = async (req, res, next) => {
   try {
     const documents = await Document.findAll({
       where: { userId: req.user.id },
+      attributes: ['id', 'title', 'documentType', 'status', 'createdAt'],
       order: [['createdAt', 'DESC']],
     });
     res.json(documents);
@@ -34,12 +40,14 @@ exports.listDocuments = async (req, res, next) => {
 
 exports.getDocument = async (req, res, next) => {
   try {
-    const document = await Document.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
+    const document = await Document.findByPk(req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+    if (!canAccessDocument(document, req.user)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     res.json(document);
   } catch (err) {
     next(err);
@@ -49,11 +57,12 @@ exports.getDocument = async (req, res, next) => {
 exports.updateDocument = async (req, res, next) => {
   try {
     const { title, documentType, content } = req.body;
-    const document = await Document.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
+    const document = await Document.findByPk(req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
+    }
+    if (!canAccessDocument(document, req.user)) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     document.title = title !== undefined ? title : document.title;
@@ -69,11 +78,12 @@ exports.updateDocument = async (req, res, next) => {
 
 exports.deleteDocument = async (req, res, next) => {
   try {
-    const document = await Document.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
+    const document = await Document.findByPk(req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
+    }
+    if (!canAccessDocument(document, req.user)) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     await document.destroy();
@@ -85,11 +95,12 @@ exports.deleteDocument = async (req, res, next) => {
 
 exports.previewDocument = async (req, res, next) => {
   try {
-    const document = await Document.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
+    const document = await Document.findByPk(req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
+    }
+    if (!canAccessDocument(document, req.user)) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     const preview = documentTemplateService.generatePreview(document);
@@ -101,11 +112,12 @@ exports.previewDocument = async (req, res, next) => {
 
 exports.downloadPdf = async (req, res, next) => {
   try {
-    const document = await Document.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
+    const document = await Document.findByPk(req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
+    }
+    if (!canAccessDocument(document, req.user)) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     const { stream, filename } = pdfService.createDocumentPDFStream(document);
