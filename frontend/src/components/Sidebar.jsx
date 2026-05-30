@@ -37,6 +37,7 @@ const Sidebar = () => {
       <button type="button" className="sidebar-logout" onClick={handleLogout}>
         Logout
       </button>
+      <div className="sidebar-footer">Built by Azlan bin Kamarul Baharin</div>
     </aside>
   );
 };

@@ -7,7 +7,6 @@ const MainLayout = ({ children }) => (
     <main className="layout-main">
       <Navbar />
       <section className="layout-content">{children}</section>
-      <footer className="app-footer">Built by Azlan bin Kamarul Baharin</footer>
     </main>
   </div>
 );

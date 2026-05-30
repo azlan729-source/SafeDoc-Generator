@@ -7,6 +7,41 @@ import Card from '../components/Card';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/ToastProvider';
 
+// Inline SVG icons (lightweight fallback to avoid adding a dependency)
+const FileTextIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M8 13h8" />
+    <path d="M8 17h8" />
+  </svg>
+);
+
+const ShieldAlertIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path d="M12 2l7 4v5c0 5-3.5 9.7-7 11-3.5-1.3-7-6-7-11V6z" />
+    <path d="M12 8v4" />
+    <circle cx="12" cy="17" r="1" />
+  </svg>
+);
+
+const FileEditIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M9 13h6" />
+    <path d="M9 17h3" />
+    <path d="M16 5l3 3" />
+  </svg>
+);
+
+const CheckCircleIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -107,40 +142,32 @@ const Dashboard = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="stats-grid dashboard-stats">
-        <Card className="dashboard-stat-card" title="Total Documents" subtitle="All documents in your workspace.">
-          <div className="stat-card-body">
-            <div className="icon-box">T</div>
-            <div>
-              <h2>{stats.total}</h2>
-              <p className="stat-description">Documents created across all workflows.</p>
-            </div>
+        <Card className="dashboard-stat-card">
+          <div className="stat-compact">
+            <div className="stat-icon blue"><FileTextIcon size={28} /></div>
+            <h2 className="stat-number">{stats.total}</h2>
+            <div className="stat-title">Total Documents</div>
           </div>
         </Card>
-        <Card className="dashboard-stat-card" title="HIRARC Documents" subtitle="Total HIRARC reports.">
-          <div className="stat-card-body">
-            <div className="icon-box">H</div>
-            <div>
-              <h2>{stats.hirarc}</h2>
-              <p className="stat-description">Safety hazard reports created so far.</p>
-            </div>
+        <Card className="dashboard-stat-card">
+          <div className="stat-compact">
+            <div className="stat-icon orange"><ShieldAlertIcon size={28} /></div>
+            <h2 className="stat-number">{stats.hirarc}</h2>
+            <div className="stat-title">HIRARC Documents</div>
           </div>
         </Card>
-        <Card className="dashboard-stat-card" title="Draft Documents" subtitle="Documents still in draft.">
-          <div className="stat-card-body">
-            <div className="icon-box">D</div>
-            <div>
-              <h2>{stats.draft}</h2>
-              <p className="stat-description">Drafts waiting for completion.</p>
-            </div>
+        <Card className="dashboard-stat-card">
+          <div className="stat-compact">
+            <div className="stat-icon purple"><FileEditIcon size={28} /></div>
+            <h2 className="stat-number">{stats.draft}</h2>
+            <div className="stat-title">Draft Documents</div>
           </div>
         </Card>
-        <Card className="dashboard-stat-card" title="Completed Documents" subtitle="Finished documents.">
-          <div className="stat-card-body">
-            <div className="icon-box">C</div>
-            <div>
-              <h2>{stats.completed}</h2>
-              <p className="stat-description">Completed documents ready to review.</p>
-            </div>
+        <Card className="dashboard-stat-card">
+          <div className="stat-compact">
+            <div className="stat-icon green"><CheckCircleIcon size={28} /></div>
+            <h2 className="stat-number">{stats.completed}</h2>
+            <div className="stat-title">Completed Documents</div>
           </div>
         </Card>
       </div>
