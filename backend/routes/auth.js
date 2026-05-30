@@ -11,8 +11,7 @@ router.post(
   [
     body('name').isString().notEmpty(),
     body('email').isEmail(),
-    body('password').isLength({ min: 8 }),
-    body('role').optional().isIn(['user', 'admin'])
+    body('password').isLength({ min: 8 })
   ],
   validate,
   authController.register

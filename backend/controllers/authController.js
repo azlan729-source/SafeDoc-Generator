@@ -8,12 +8,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
     const existing = await User.findOne({ where: { email } });
     if (existing) return res.status(409).json({ error: 'Email already in use' });
 
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hash, role });
+    const user = await User.create({ name, email, password: hash, role: 'user' });
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });

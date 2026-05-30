@@ -5,3 +5,14 @@ exports.health = (req, res) => {
     timestamp: new Date().toISOString()
   });
 };
+
+exports.adminTest = (req, res) => {
+  res.json({
+    message: 'Admin access granted',
+    user: {
+      id: req.user.id,
+      email: req.user.email,
+      role: req.user.role
+    }
+  });
+};

@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'user',
       validate: {
-        isIn: [['user', 'admin']],
+        isIn: [['user', 'admin', 'safety_manager', 'supervisor']],
       },
     },
   }, {
