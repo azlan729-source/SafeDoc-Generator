@@ -1,5 +1,5 @@
-const Card = ({ title, subtitle, children, className = '' }) => (
-  <section className={`card ${className}`}>
+const Card = ({ title, subtitle, children, className = '', ...props }) => (
+  <section className={`card ${className}`} {...props}>
     {(title || subtitle) && (
       <div className="card-header">
         {title && <h2>{title}</h2>}

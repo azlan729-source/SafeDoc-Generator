@@ -5,6 +5,11 @@ export const fetchDocuments = async () => {
   return response.data;
 };
 
+export const fetchDocumentById = async id => {
+  const response = await api.get(`/documents/${id}`);
+  return response.data;
+};
+
 export const createDocument = async payload => {
   const response = await api.post('/documents', payload);
   return response.data;

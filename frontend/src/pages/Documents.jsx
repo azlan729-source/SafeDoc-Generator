@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchDocuments, createDocument, deleteDocument, previewDocument, downloadDocumentPDF } from '../services/documentService';
+import { fetchDocuments, fetchDocumentById, deleteDocument } from '../services/documentService';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Spinner from '../components/Spinner';
@@ -7,26 +7,12 @@ import { useToast } from '../components/ToastProvider';
 
 const Documents = () => {
   const [documents, setDocuments] = useState([]);
-  const [title, setTitle] = useState('');
-  const [documentType, setDocumentType] = useState('HIRARC');
-  const [content, setContent] = useState('');
-  const [preview, setPreview] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [exportLoadingId, setExportLoadingId] = useState(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [saving, setSaving] = useState(false);
   const toast = useToast();
-
-  useEffect(() => {
-    loadDocuments();
-  }, []);
-
-  const showSuccess = message => {
-    setSuccess(message);
-    setTimeout(() => setSuccess(''), 3000);
-  };
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -35,189 +21,149 @@ const Documents = () => {
       const data = await fetchDocuments();
       setDocuments(data);
     } catch (err) {
-      setError('Unable to load documents.');
+      setError('Unable to load document history.');
+      toast.error('Unable to load document history.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreate = async event => {
-    event.preventDefault();
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const handleView = async id => {
     setError('');
-    setPreview(null);
-    let parsedContent;
-
+    setViewLoading(true);
     try {
-      parsedContent = JSON.parse(content);
+      const data = await fetchDocumentById(id);
+      setSelectedDocument(data);
     } catch (err) {
-      setError('Content must be valid JSON.');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await createDocument({ title, documentType, content: parsedContent });
-      setTitle('');
-      setDocumentType('HIRARC');
-      setContent('');
-      showSuccess('Document created successfully.');
-      await loadDocuments();
-    } catch (err) {
-      const message = err.response?.data?.error || 'Unable to save document.';
+      const message = err.response?.data?.error || 'Unable to load document details.';
       setError(message);
       toast.error(message);
     } finally {
-      setSaving(false);
+      setViewLoading(false);
     }
   };
 
   const handleDelete = async id => {
+    const confirmed = window.confirm('Are you sure you want to delete this document?');
+    if (!confirmed) return;
+
     setError('');
+    setDeleteLoadingId(id);
     try {
       await deleteDocument(id);
       setDocuments(prev => prev.filter(doc => doc.id !== id));
-      if (preview?.id === id) {
-        setPreview(null);
+      if (selectedDocument?.id === id) {
+        setSelectedDocument(null);
       }
-      showSuccess('Document deleted successfully.');
       toast.success('Document deleted successfully.');
     } catch (err) {
-      setError('Unable to delete document.');
-    }
-  };
-
-  const handlePreview = async id => {
-    setError('');
-    setPreviewLoading(true);
-    try {
-      const data = await previewDocument(id);
-      setPreview({ id, data });
-    } catch (err) {
-      const message = 'Unable to load preview.';
+      const message = err.response?.data?.error || 'Unable to delete document.';
       setError(message);
       toast.error(message);
     } finally {
-      setPreviewLoading(false);
-    }
-  };
-
-  const handleExportPDF = async docItem => {
-    setError('');
-    setExportLoadingId(docItem.id);
-
-    try {
-      const pdfBlob = await downloadDocumentPDF(docItem.id);
-      const fileUrl = window.URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = `${docItem.title || 'safedoc'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(fileUrl);
-    } catch (err) {
-      setError('Unable to download PDF.');
-    } finally {
-      setExportLoadingId(null);
+      setDeleteLoadingId(null);
     }
   };
 
   return (
     <div className="documents-page">
-      <div className="documents-grid">
-        <section className="form-panel">
-          <Card title="Create document" subtitle="Enter the document details and JSON content to generate a safety preview.">
-            <form className="auth-form" onSubmit={handleCreate}>
-            <label>
-              Title
-              <input
-                type="text"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Document title"
-                required
-              />
-            </label>
-            <label>
-              Document Type
-              <select value={documentType} onChange={e => setDocumentType(e.target.value)}>
-                <option value="HIRARC">HIRARC</option>
-                <option value="PTW">PTW</option>
-                <option value="CHECKLIST">CHECKLIST</option>
-              </select>
-            </label>
-            <label>
-              Content (JSON)
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                placeholder='e.g. { "items": [{ "task": "Check tool", "completed": false }] }'
-                rows="8"
-                required
-              />
-            </label>
-            {error && <div className="alert alert-error">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving document...' : 'Create Document'}
-            </Button>
-          </form>
-          </Card>
-        </section>
-
-        <section className="list-panel">
-          <Card title="Your documents" subtitle="Preview or delete documents created under your account.">
-            {loading ? (
-              <div className="loading-panel"><Spinner /> Loading documents...</div>
-            ) : (
-              <div className="document-grid">
-                {documents.length === 0 ? (
-                  <div className="empty-state">No documents available yet.</div>
-                ) : (
-                  documents.map(document => (
-                    <div key={document.id} className="document-card">
-                      <div>
-                        <h3>{document.title}</h3>
-                        <p className="document-meta">{document.documentType}</p>
-                      </div>
-                      <div className="document-actions">
-                        <Button onClick={() => handlePreview(document.id)}>
-                          {previewLoading && preview?.id === document.id ? 'Previewing…' : 'Preview'}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => handleExportPDF(document)}
-                          disabled={exportLoadingId === document.id}
-                        >
-                          {exportLoadingId === document.id ? 'Exporting…' : 'Export PDF'}
-                        </Button>
-                        <Button variant="outline" onClick={() => handleDelete(document.id)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </Card>
-        </section>
+      <div className="page-header">
+        <div>
+          <h1>Documents</h1>
+          <p className="page-copy">Manage and review your safety documents.</p>
+        </div>
       </div>
 
-      <section className="preview-panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Document preview</p>
-            <h2>Preview output</h2>
+      {error && <div className="alert alert-error">{error}</div>}
+
+      <Card title="Document history" subtitle="View your document activity and manage files with a single click.">
+        {loading ? (
+          <div className="loading-panel"><Spinner /> Loading documents...</div>
+        ) : documents.length === 0 ? (
+          <div className="empty-state">No documents found. Generate a document from the HIRARC Builder to get started.</div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="document-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Document Type</th>
+                  <th>Status</th>
+                  <th>Created Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.map(document => (
+                  <tr key={document.id}>
+                    <td>{document.title}</td>
+                    <td>{document.documentType}</td>
+                    <td>{document.status}</td>
+                    <td>{new Date(document.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <div className="table-actions">
+                        <Button onClick={() => handleView(document.id)}>
+                          {viewLoading && selectedDocument?.id === document.id ? 'Loading…' : 'View'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          disabled={deleteLoadingId === document.id}
+                          onClick={() => handleDelete(document.id)}
+                        >
+                          {deleteLoadingId === document.id ? 'Deleting…' : 'Delete'}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {selectedDocument && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">Document details</p>
+                <h2>{selectedDocument.title}</h2>
+                <p className="page-copy">{selectedDocument.documentType} · {selectedDocument.status}</p>
+              </div>
+              <Button variant="outline" onClick={() => setSelectedDocument(null)}>
+                Close
+              </Button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-row">
+                <strong>Title</strong>
+                <span>{selectedDocument.title}</span>
+              </div>
+              <div className="modal-row">
+                <strong>Document Type</strong>
+                <span>{selectedDocument.documentType}</span>
+              </div>
+              <div className="modal-row">
+                <strong>Status</strong>
+                <span>{selectedDocument.status}</span>
+              </div>
+              <div className="modal-row">
+                <strong>Created</strong>
+                <span>{new Date(selectedDocument.createdAt).toLocaleString()}</span>
+              </div>
+              <div className="modal-row">
+                <strong>Content</strong>
+                <pre className="json-preview">{JSON.stringify(selectedDocument.content, null, 2)}</pre>
+              </div>
+            </div>
           </div>
         </div>
-        {error && !success && <div className="alert alert-error">{error}</div>}
-        {preview ? (
-          <pre>{JSON.stringify(preview.data, null, 2)}</pre>
-        ) : (
-          <p className="preview-hint">Select a document to view the preview output here.</p>
-        )}
-      </section>
+      )}
     </div>
   );
 };
